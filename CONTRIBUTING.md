@@ -8,6 +8,7 @@ npm run test:watch   # Core and React tests
 npm run check        # Formatting, types, tests, production builds
 npx playwright install chromium
 npm run test:e2e     # Browser contracts
+npm run test:package # Packed imports, React 18/19, SSR, and declaration compatibility
 ```
 
 Before a pull request, run checks relevant to your changes. CI is manual-only: maintainers can run the **Check** workflow when needed. No workflow runs on push or pull request.

@@ -22,6 +22,8 @@ Latest-intent semantics are useful for reads. Overlapping writes can change serv
 
 ## Own a small, composable boundary
 
+Debounce records intent immediately while coalescing execution; feedback clocks start when work starts. Navigation prefetch gets a bounded head start with exact keys, fixed expiry, no queue, and results consumed once. A click takes ownership of in-flight speculation instead of starting another request. Foreground navigation is never blocked by speculation limits.
+
 The core depends on standard promises, timers, and AbortController. It doesn't know about React, URLs, the DOM, or application caches. Framework adapters are responsible for framework lifecycles; applications remain responsible for data meaning.
 
 ## Prove behavior under pressure

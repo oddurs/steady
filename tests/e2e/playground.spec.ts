@@ -87,3 +87,82 @@ test('renders without horizontal overflow or runtime errors', async ({
   ).toBe(true);
   expect(errors).toEqual([]);
 });
+
+test('typing is acknowledged while requests are coalesced and Enter flushes', async ({
+  page,
+}) => {
+  const input = page.getByRole('textbox', { name: 'Search projects' });
+  await input.fill('design');
+  await expect(page.getByTestId('search-phase')).toHaveText(
+    'Waiting for typing to stop',
+  );
+  await expect(page.getByTestId('search-requests')).toHaveText('0');
+  await input.fill('navigation');
+  await input.press('Enter');
+  await expect(page.getByTestId('search-requests')).toHaveText('1');
+  await expect(
+    page.getByRole('list', { name: 'Search results' }).getByRole('listitem'),
+  ).toHaveCount(1);
+  await expect(
+    page.getByRole('list', { name: 'Search results' }),
+  ).toContainText('Navigation research');
+});
+
+test('prefetched navigation consumes one warm result without a second request', async ({
+  page,
+}) => {
+  await page
+    .getByRole('checkbox', { name: 'Warm on hover and focus' })
+    .uncheck();
+  await page.getByRole('button', { name: 'Warm Notes explicitly' }).click();
+  await expect(page.getByTestId('prefetch-status')).toHaveText(
+    'Notes is ready for its next visit.',
+  );
+  await expect(page.getByTestId('prefetch-requests')).toHaveText('1');
+  await expect(page.getByTestId('prefetch-current')).toHaveText('Home');
+  await page.getByRole('button', { name: 'Open Notes', exact: true }).click();
+  await expect(page.getByTestId('prefetch-current')).toHaveText('Notes');
+  await expect(page.getByTestId('prefetch-requests')).toHaveText('1');
+  await page.getByRole('button', { name: 'Open Notes', exact: true }).click();
+  await expect(page.getByTestId('prefetch-requests')).toHaveText('2');
+});
+
+test('keyboard focus warms a destination without committing it', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: 'Open Library', exact: true }).focus();
+  await expect(page.getByTestId('prefetch-status')).toHaveText(
+    'Library is ready for its next visit.',
+  );
+  await expect(page.getByTestId('prefetch-current')).toHaveText('Home');
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('prefetch-current')).toHaveText('Library');
+  await expect(page.getByTestId('prefetch-requests')).toHaveText('1');
+});
+
+test('a failed speculative request remains local and a click fetches fresh data', async ({
+  page,
+}) => {
+  await page
+    .getByRole('checkbox', { name: 'Warm on hover and focus' })
+    .uncheck();
+  await page.getByRole('button', { name: 'Fail next request' }).click();
+  await page.getByRole('button', { name: 'Warm Notes explicitly' }).click();
+  await expect(page.getByTestId('prefetch-status')).toContainText(
+    'Warming failed.',
+  );
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Open Notes', exact: true }).click();
+  await expect(page.getByTestId('prefetch-current')).toHaveText('Notes');
+  await expect(page.getByTestId('prefetch-requests')).toHaveText('2');
+});
+
+test('the slash shortcut focuses search without interrupting typing', async ({
+  page,
+}) => {
+  await page.keyboard.press('/');
+  const input = page.getByRole('textbox', { name: 'Search projects' });
+  await expect(input).toBeFocused();
+  await input.press('/');
+  await expect(input).toHaveValue('/');
+});

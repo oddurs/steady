@@ -47,7 +47,7 @@ export function WorkspaceLink({
 }
 ```
 
-Style `data-pending` to acknowledge the click immediately. `aria-current` continues to identify the committed route. This example deliberately exposes current and pending separately; exclusive optimistic selection across an entire navigation group requires a router-aware group adapter. That adapter is not shipped in 0.1.
+Style `data-pending` to acknowledge the click immediately. `aria-current` continues to identify the committed route. This example deliberately exposes current and pending separately; exclusive optimistic selection across an entire navigation group requires a router-aware group adapter. That adapter is not shipped in 0.2.
 
 Keep Next's link behavior for modified clicks, new tabs, downloads, prefetching, external URLs, redirects, and browser history. A global click listener that calls `preventDefault()` would break those contracts.
 
@@ -73,7 +73,7 @@ interface ReadableStore<T> {
 }
 ```
 
-Subscribe on mount, read the snapshot on notification, and unsubscribe/dispose on teardown. Translate the snapshot into a Vue shallow ref, Svelte store, Solid signal, or DOM updates. No React import is required. Dedicated framework packages are not included in 0.1.
+Subscribe on mount, read the snapshot on notification, and unsubscribe/dispose on teardown. Translate the snapshot into a Vue shallow ref, Svelte store, Solid signal, or DOM updates. No React import is required. Dedicated framework packages are not included in 0.2.
 
 ## Accessibility and motion
 

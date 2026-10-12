@@ -723,6 +723,121 @@ input[type='range']::-moz-range-thumb {
   max-height: 195px;
   overflow: auto;
 }
+.search-metrics {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  font: 9px var(--mono);
+  color: #637354;
+}
+.prefetch-experiment {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+.prefetch-copy > p {
+  max-width: 430px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #637354;
+}
+.prefetch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-block: 18px;
+}
+.prefetch-actions .condition-button {
+  width: auto;
+}
+.text-button {
+  border: 0;
+  padding: 4px 0;
+  background: none;
+  text-decoration: underline;
+  font-size: 10px;
+  color: #4e673b;
+}
+.prefetch-copy > .prefetch-contract {
+  font-size: 10px;
+}
+.prefetch-workspace {
+  background: #fffefb;
+  border: 1px solid #d9dfce;
+  border-radius: 6px;
+  padding: 20px;
+}
+.prefetch-metrics {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font: 9px var(--mono);
+  color: #637354;
+  letter-spacing: 0.6px;
+}
+.prefetch-metrics output {
+  font-size: 24px;
+  letter-spacing: -1px;
+}
+.prefetch-tabs {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+.prefetch-tabs button {
+  flex: 1;
+  border: 1px solid #d0d9c3;
+  border-radius: 4px;
+  padding: 11px 8px;
+  background: #f4f6ed;
+  font-size: 11px;
+  color: #4e673b;
+}
+.prefetch-tabs button[aria-pressed='true'] {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.prefetch-content {
+  min-height: 100px;
+  padding-top: 24px;
+}
+.prefetch-content > span {
+  font: 9px var(--mono);
+  text-transform: uppercase;
+  color: #637354;
+}
+.prefetch-content p {
+  font:
+    27px/1.2 'Instrument Serif',
+    Georgia,
+    serif;
+  margin: 10px 0 20px;
+}
+.prefetch-status,
+.prefetch-pending {
+  display: block;
+  min-height: 20px;
+  font-size: 10px;
+  line-height: 1.6;
+  color: #637354;
+}
+.prefetch-error {
+  font-size: 11px;
+  color: #965334;
+}
+@media (max-width: 760px) {
+  .prefetch-experiment {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .prefetch-copy .checkbox-label {
+    display: flex;
+  }
+}
 .search-results li {
   display: flex;
   align-items: center;

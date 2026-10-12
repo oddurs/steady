@@ -1,4 +1,10 @@
-import { StrictMode, useRef, useState, type CSSProperties } from 'react';
+import {
+  StrictMode,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   Pending,
@@ -8,6 +14,7 @@ import {
   useTask,
 } from '@oddurs/steady/react';
 import type { TaskContext } from '@oddurs/steady';
+import { PrefetchDemo } from './PrefetchDemo';
 import './style.css';
 
 const sections = ['Overview', 'Activity', 'Settings'] as const;
@@ -105,14 +112,40 @@ function App() {
   );
 
   const [query, setQuery] = useState('');
+  const [searchRequests, setSearchRequests] = useState(0);
+  const searchInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      if (
+        event.key !== '/' ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.isComposing
+      )
+        return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest(
+          'input, textarea, select, [contenteditable="true"]',
+        )
+      )
+        return;
+      event.preventDefault();
+      searchInput.current?.focus();
+    };
+    window.addEventListener('keydown', focusSearch);
+    return () => window.removeEventListener('keydown', focusSearch);
+  }, []);
   const search = useTask(
     async (term: string, context) => {
+      setSearchRequests((count) => count + 1);
       await transport(term, context);
       return projects.filter((project) =>
         project.toLowerCase().includes(term.toLowerCase()),
       );
     },
-    { initialData: projects },
+    { initialData: projects, debounceMs: 250 },
   );
 
   const save = useMutation(
@@ -188,7 +221,7 @@ function App() {
           <span className="brand-icon" aria-hidden="true">
             ≋
           </span>
-          steady<span className="version">v0.1</span>
+          steady<span className="version">v0.2</span>
         </a>
         <nav aria-label="Main">
           <a href="https://github.com/oddurs/steady#readme">
@@ -487,13 +520,21 @@ function App() {
             <article className="experiment" aria-labelledby="search-title">
               <div className="panel-label">02 / SEARCH THAT KEEPS UP</div>
               <h3 id="search-title">Your last word wins.</h3>
-              <p>Useful results stay in place while the next request runs.</p>
+              <p>
+                Keep typing. Requests wait for a 250ms pause. Press Enter to
+                search immediately.
+              </p>
               <label className="search-field">
                 <span aria-hidden="true">⌕</span>
                 <input
+                  ref={searchInput}
                   aria-label="Search projects"
                   placeholder="Search projects…"
                   value={query}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.nativeEvent.isComposing)
+                      search.flush();
+                  }}
                   onChange={(event) => {
                     const value = event.target.value;
                     setQuery(value);
@@ -502,6 +543,21 @@ function App() {
                 />
                 <kbd>/</kbd>
               </label>
+              <div className="search-metrics">
+                <span data-testid="search-phase">
+                  {search.isScheduled
+                    ? 'Waiting for typing to stop'
+                    : search.isPending
+                      ? 'Request in flight'
+                      : 'Ready'}
+                </span>
+                <span>
+                  Requests:{' '}
+                  <output data-testid="search-requests">
+                    {searchRequests}
+                  </output>
+                </span>
+              </div>
               <ul
                 className="search-results"
                 aria-label="Search results"
@@ -586,6 +642,7 @@ function App() {
               </div>
             </article>
           </div>
+          <PrefetchDemo transport={transport} />
           <div className="event-log">
             <div className="panel-label">
               <span className="status-dot" /> UNDER THE SURFACE

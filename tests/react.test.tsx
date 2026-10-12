@@ -137,4 +137,76 @@ describe('React integration', () => {
     expect(getByRole('status')).toBe(region);
     expect(region.textContent).toBe('Still working');
   });
+
+  it('exposes debounced intent immediately and can flush it from React', async () => {
+    vi.useFakeTimers();
+    try {
+      const load = vi.fn((query: string) => query);
+      const { result, unmount } = renderHook(() =>
+        useTask(load, { debounceMs: 250 }),
+      );
+      act(() => {
+        void result.current.run('first');
+        void result.current.run('latest');
+      });
+      expect(result.current).toMatchObject({
+        input: 'latest',
+        isPending: true,
+        isScheduled: true,
+      });
+      expect(load).not.toHaveBeenCalled();
+      await act(async () => {
+        result.current.flush();
+      });
+      expect(load).toHaveBeenCalledTimes(1);
+      expect(result.current.data).toBe('latest');
+      unmount();
+      await act(async () => {});
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('prefetches from React without changing selection and cleans up on unmount', async () => {
+    const request = deferred<string>();
+    const load = vi.fn(() => request.promise);
+    const { result, unmount } = renderHook(
+      () =>
+        useNavigation(load, {
+          initial: { destination: '/', data: 'Home' },
+          prefetch: {},
+        }),
+      { wrapper: StrictMode },
+    );
+    await act(async () => {});
+    let warm!: ReturnType<typeof result.current.prefetch>;
+    act(() => {
+      warm = result.current.prefetch('/next');
+    });
+    expect(result.current.selected).toBe('/');
+    expect(result.current.isPending).toBe(false);
+    unmount();
+    await act(async () => {});
+    expect(await warm).toEqual({ status: 'cancelled' });
+  });
+
+  it('uses warmed data once and lets the application invalidate it after a context change', async () => {
+    const { result, rerender } = renderHook(
+      ({ scope }) =>
+        useNavigation((path) => `${scope}:${path}`, {
+          initial: { destination: '/', data: 'Home' },
+          prefetch: {},
+        }),
+      { initialProps: { scope: 'before' } },
+    );
+    await act(async () => {
+      await result.current.prefetch('/next');
+    });
+    rerender({ scope: 'after' });
+    act(() => result.current.invalidatePrefetch());
+    await act(async () => {
+      await result.current.navigate('/next');
+    });
+    expect(result.current.data.data).toBe('after:/next');
+  });
 });

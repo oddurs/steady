@@ -20,7 +20,7 @@ import {
   type Operation,
   type TaskOptions,
   type FeedbackOptions,
-  type Destination,
+  type NavigationOptions,
   type MutationOptions,
 } from '@oddurs/steady';
 
@@ -94,6 +94,7 @@ export function useTask<I, T>(
     ...snapshot,
     run: task.run,
     retry: task.retry,
+    flush: task.flush,
     cancel: task.cancel,
     reset: task.reset,
   };
@@ -101,7 +102,7 @@ export function useTask<I, T>(
 
 export function useNavigation<T>(
   load: Operation<string, T>,
-  options: FeedbackOptions & { initial: Destination<T> },
+  options: NavigationOptions<T>,
 ) {
   const defaults = useContext(FeedbackContext);
   const callback = useLatest(load);
@@ -117,6 +118,8 @@ export function useNavigation<T>(
     ...snapshot,
     navigate: navigation.navigate,
     retry: navigation.retry,
+    prefetch: navigation.prefetch,
+    invalidatePrefetch: navigation.invalidatePrefetch,
     cancel: navigation.cancel,
     reset: navigation.reset,
   };

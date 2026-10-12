@@ -10,11 +10,14 @@ Options:
 | ------------- | ----------- | ----------------------------------------------------------------------------------- |
 | `initialData` | `undefined` | Data available before the first successful request.                                 |
 | `concurrency` | `'latest'`  | `'latest'` supersedes older work; `'single'` returns a busy result for overlaps.    |
+| `debounceMs`  | `0`         | Wait for an input pause before executing. Acknowledgment is immediate.              |
 | `delayMs`     | `150`       | Delay before visual pending feedback. Does not delay the request or acknowledgment. |
 | `slowMs`      | `2500`      | Time until more helpful slow-request feedback. Independent of `delayMs`.            |
 | `timeoutMs`   | disabled    | Local timeout, reported as `TimeoutError`. Does not undo server work.               |
 
 Timer values must be finite, non-negative numbers no larger than 2,147,483,647. A zero delay enables that feedback immediately. An operation which never settles remains pending until explicitly cancelled, superseded, disposed, or timed out.
+
+With debounce enabled, `input` and `isPending` update synchronously and `isScheduled` is true until the operation starts. Only the latest accepted input executes. Feedback and timeout timers start at execution, excluding the debounce interval. `flush()` starts scheduled work immediately and is a no-op once it has started. Cancellation, reset, and disposal prevent scheduled work from running. Single concurrency blocks overlap during scheduling as well as execution. `retry()` also follows the configured debounce policy.
 
 ### Snapshot
 
@@ -27,6 +30,7 @@ Timer values must be finite, non-negative numbers no larger than 2,147,483,647. 
   data: Output | undefined;
   error: unknown;
   isPending: boolean;
+  isScheduled: boolean;
   showPending: boolean;
   isSlow: boolean;
 }
@@ -51,17 +55,49 @@ Superseded and cancelled promises settle immediately, even when a transport igno
 
 `subscribe(listener)` returns an unsubscribe function. Listeners are synchronous and should not throw. `getInitialSnapshot()` returns the stable initial snapshot for server rendering and hydration. Build separate stores per server request; do not share user data in a process-wide singleton.
 
-## `createNavigation(load, { initial, ...feedback })`
+## `createNavigation(load, { initial, prefetch?, ...feedback })`
 
 `initial` is `{ destination: string, data: T }`. `load(destination, context)` returns the destination's data. The store adds:
 
 - `selected`: requested destination while pending; otherwise the committed destination.
 - `current`: the destination whose data has committed.
-- `data`: the most recently committed `{ destination, data }` pair.
+- `data`: the most recently committed `{ destination, data }` pair; always defined, including in the TypeScript type.
 
-Methods are `navigate`, `retry`, `cancel`, `reset`, and `dispose`. Navigation always uses latest-intent semantics. Failure and cancellation restore `selected` to `current`; failed destination information remains in `input` for recovery. Navigating to the current destination explicitly reloads it.
+Methods are `navigate`, `retry`, `prefetch`, `invalidatePrefetch`, `cancel`, `reset`, and `dispose`. Navigation always uses latest-intent semantics. Failure and cancellation restore `selected` to `current`; failed destination information remains in `input` for recovery. Navigating to the current destination loads it again, consuming a matching prefetch if available.
 
 This is a content-navigation primitive, not a URL router. An adapter must own browser history, back/forward navigation, scroll, focus, and redirects. See [integrations](integrations.md).
+
+### Prefetch options and results
+
+Prefetch is disabled by default. Set `prefetch: {}` to opt in. Requests begin only when you call `prefetch(destination)`.
+
+| Option          | Default  | Meaning                                                                                                    |
+| --------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
+| `ttlMs`         | `10_000` | Lifetime from successful completion. Repeated access does not extend it.                                   |
+| `maxEntries`    | `8`      | Maximum speculative entries, including in-flight work. Completed entries use least-recently-used eviction. |
+| `maxConcurrent` | `2`      | Maximum simultaneous speculative requests. Excess calls are skipped, not queued.                           |
+| `timeoutMs`     | `5_000`  | Speculative timeout. Removed when navigation claims the request.                                           |
+
+Limits must be positive safe integers; timer durations follow the same constraints as task timers. A zero TTL disables retention after completion while preserving in-flight deduplication. Expired entries are pruned on access; settled entries do not keep background timers alive.
+
+```ts
+type PrefetchResult<T> =
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: unknown }
+  | {
+      status: 'skipped';
+      reason: 'disabled' | 'capacity' | 'concurrency' | 'active';
+    }
+  | { status: 'cancelled' | 'disposed' };
+```
+
+Repeated prefetch calls for an existing destination share the exact same promise. Prefetch never changes the navigation snapshot or surfaces an error there. Failed entries are removed so a later navigation can fetch fresh data. The `active` skip reason means that destination is already being loaded by a foreground navigation.
+
+Navigation consumes a matching entry once. If it is still pending, cancellation ownership transfers to that navigation, its speculative timeout is cleared, and the navigation's own optional timeout starts. Superseding, cancelling, or disposing that navigation requests abort of the original transport. An actual navigation is never blocked by a speculative request budget; foreground requests are outside that budget. Foreground successes do not populate the speculative buffer.
+
+`invalidatePrefetch(destination?)` removes one exact key or all speculative entries and requests abort of their pending work. It does not affect a request already claimed by navigation. `reset()` clears both speculative entries and navigation state; `dispose()` settles and cleans up all owned work. Speculative loader contexts have negative `id` values; foreground task ids are positive. A promoted request keeps its original context and signal.
+
+Keys are exact strings. Invalidate after writes or user-context changes; include relevant filters and identity in keys. Operation callback changes do not invalidate already warmed data. See [prefetching and debounce](performance.md) for integration guidance.
 
 ## `createMutation(write, { initialData, optimistic?, ...feedback })`
 
