@@ -227,10 +227,13 @@ This release covers tasks, debounced execution, asynchronous section navigation,
 
 ## More
 
+- [Getting started](docs/getting-started.md)
 - [API and lifecycle contracts](docs/api.md)
 - [Prefetching and debounce](docs/performance.md)
+- [Svelte integration](docs/svelte.md)
 - [Next.js and existing data layers](docs/integrations.md)
 - [Design decisions](docs/design.md)
+- [Svelte website source and setup](site/)
 - [Contributing](CONTRIBUTING.md)
 
 ## Development
@@ -241,6 +244,16 @@ npx playwright install chromium
 npm run test:e2e     # Browser interaction tests
 npm run test:package # Install the tarball in isolation; check React 18/19 and declarations
 npm run dev         # Playground
+```
+
+The promotional website and docs live in `site/`, built with Svelte 5 and SvelteKit. Its layout runs from top to bottom, with a working Steady demo and static documentation generated from `docs/`.
+
+```sh
+npm --prefix site ci
+npm run site:dev     # Sync documentation and start the website
+npm run site:check   # Svelte and TypeScript checks
+npm run site:build   # Static export
+npm run site:test    # Desktop/mobile browser checks against the built site
 ```
 
 GitHub checks are **manual-only** (`workflow_dispatch`); pushes and pull requests do not automatically run CI.

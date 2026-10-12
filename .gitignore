@@ -6,6 +6,10 @@ playwright-report/
 test-results/
 *.tgz
 .DS_Store
+.sites/
+site/.svelte-kit/
+site/build/
+site/.sites-runtime/
 .env
 .env.*
 !.env.example
