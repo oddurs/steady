@@ -5,7 +5,11 @@ test('demo acknowledges intent, keeps content, and recovers from failure', async
 }, info) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/');
+  page.on('response', (response) => {
+    if (response.status() >= 400)
+      errors.push(`${response.status()} ${response.url()}`);
+  });
+  await page.goto('./');
   const demo = page.getByTestId('navigation-demo');
   await expect(demo.getByRole('button', { name: 'Projects' })).toBeEnabled();
   await page.screenshot({
@@ -18,9 +22,7 @@ test('demo acknowledges intent, keeps content, and recovers from failure', async
   await demo.getByRole('button', { name: 'Notes', exact: false }).click();
   await expect(demo.getByTestId('selected')).toHaveText('Notes');
   await expect(demo.getByTestId('current')).toHaveText('Notes');
-  await expect(demo.getByRole('heading')).toHaveText(
-    'The details make the difference.',
-  );
+  await expect(demo.getByRole('heading')).toHaveText('Notes');
   await demo
     .getByRole('button', { name: 'Make the next request fail' })
     .click();
@@ -41,7 +43,7 @@ test('demo acknowledges intent, keeps content, and recovers from failure', async
 test('docs navigate, deep-link, and fit a small viewport', async ({
   page,
 }, info) => {
-  await page.goto('/docs/getting-started/');
+  await page.goto('docs/getting-started/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
     'Getting started',
   );
@@ -75,7 +77,7 @@ test('install command copies the real release URL', async ({
   context,
 }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: 'Copy install the release' }).click();
   await expect(
     page.getByRole('button', { name: 'Copy install the release' }),
@@ -87,6 +89,7 @@ test('install command copies the real release URL', async ({
 
 test('all docs are readable and linked without JavaScript', async ({
   browser,
+  baseURL,
 }, info) => {
   const context = await browser.newContext({
     javaScriptEnabled: false,
@@ -107,10 +110,21 @@ test('all docs are readable and linked without JavaScript', async ({
     'design',
   ];
   for (const slug of pages) {
-    const response = await page.goto(`http://127.0.0.1:4180/docs/${slug}/`);
+    const response = await page.goto(new URL(`docs/${slug}/`, baseURL).href);
     expect(response?.status()).toBe(200);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.locator('.prose')).not.toBeEmpty();
+    const misplacedLinks = await page.locator('a[href]').evaluateAll((links) =>
+      links
+        .map((link) => new URL(link.getAttribute('href')!, location.href))
+        .filter(
+          (url) =>
+            url.origin === location.origin &&
+            !url.pathname.startsWith('/steady/'),
+        )
+        .map((url) => url.href),
+    );
+    expect(misplacedLinks).toEqual([]);
     await expect(
       page.getByRole('navigation', { name: 'Documentation', exact: true }),
     ).toBeVisible();

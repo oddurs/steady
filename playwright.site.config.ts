@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: './tests/site',
   fullyParallel: true,
   reporter: 'list',
-  use: { baseURL: 'http://127.0.0.1:4180', trace: 'retain-on-failure' },
+  use: { baseURL: 'http://127.0.0.1:4180/steady/', trace: 'retain-on-failure' },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
     {
@@ -14,7 +14,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm --prefix site run preview -- --port 4180 --strictPort',
-    url: 'http://127.0.0.1:4180',
+    url: 'http://127.0.0.1:4180/steady/',
     reuseExistingServer: false,
     timeout: 30_000,
   },

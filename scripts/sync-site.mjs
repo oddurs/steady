@@ -117,7 +117,7 @@ writeFileSync(
   new URL('project.ts', directory),
   'export const version = ' +
     JSON.stringify(manifest.version) +
-    ';\nexport const repository = "https://github.com/oddurs/steady";\nexport const origin = "https://steady.amusedcoati256.chatgpt.site";\n',
+    ';\nexport const repository = "https://github.com/oddurs/steady";\nexport const origin = "https://oddurs.github.io/steady";\n',
 );
 console.log(
   `Synced ${docs.length} documentation pages for Steady ${manifest.version}.`,

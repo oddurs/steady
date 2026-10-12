@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import { resolve } from '$app/paths';
   import { pages } from '../../lib/generated/navigation';
   let { children } = $props();
   const groups = [...new Set(pages.map((entry) => entry.group))];
@@ -13,7 +14,7 @@
       {#each groups as group}
         <div class="docs-nav-group"><span>{group}</span>
           {#each pages.filter((entry) => entry.group === group) as entry}
-            <a href={`/docs/${entry.slug}/`} aria-current={page.url.pathname === `/docs/${entry.slug}/` ? 'page' : undefined} onclick={() => { menuOpen = false; }}>{entry.title}</a>
+            <a href={resolve(`docs/${entry.slug}/`)} aria-current={page.params.slug === entry.slug ? 'page' : undefined} onclick={() => { menuOpen = false; }}>{entry.title}</a>
           {/each}
         </div>
       {/each}

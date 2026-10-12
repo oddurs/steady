@@ -2,6 +2,8 @@
 
 **Interfaces that hold up.**
 
+[Website and documentation](https://oddurs.github.io/steady/)
+
 Durable interaction primitives for the web. A framework-independent TypeScript core and headless React hooks for immediate intent, honest feedback, and predictable recovery.
 
 Click a section: selection changes immediately. The current content stays useful while its replacement loads. Click something else: the latest intent wins, even if the first request ignores cancellation. Lose the connection: selection recovers and existing content survives.
@@ -256,6 +258,6 @@ npm run site:build   # Static export
 npm run site:test    # Desktop/mobile browser checks against the built site
 ```
 
-GitHub checks are **manual-only** (`workflow_dispatch`); pushes and pull requests do not automatically run CI.
+GitHub checks and website deployments are **manual-only** (`workflow_dispatch`); pushes and pull requests do not automatically run CI. Publish the site with `gh workflow run pages.yml --ref main`.
 
 MIT © Oddur Sigurdsson

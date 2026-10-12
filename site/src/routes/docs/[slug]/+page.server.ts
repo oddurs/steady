@@ -1,4 +1,5 @@
 import { error } from '@sveltejs/kit';
+import { resolve } from '$app/paths';
 import { Marked, Renderer } from 'marked';
 import { docs } from '../../../lib/generated/docs';
 import type { PageServerLoad } from './$types';
@@ -33,7 +34,7 @@ export const load: PageServerLoad = ({ params }) => {
       table(token) { return `<div class="table-scroll" tabindex="0" role="region" aria-label="Reference table">${Renderer.prototype.table.call(this, token)}</div>`; },
     },
   });
-  const body = entry.body.replace(/^# [^\n]+\n/, '').replace(/\]\((api|performance|integrations|design|svelte|getting-started)\.md([^)]*)\)/g, (_, file, hash) => `](/docs/${file === 'api' ? 'tasks' : file}/${hash})`);
+  const body = entry.body.replace(/^# [^\n]+\n/, '').replace(/\]\((api|performance|integrations|design|svelte|getting-started)\.md([^)]*)\)/g, (_, file, hash) => `](${resolve(`docs/${file === 'api' ? 'tasks' : file}/`)}${hash})`);
   const html = marked.parse(body, { async: false });
   const metadata = ({ body: _body, ...page }: typeof entry) => page;
   return { ...metadata(entry), html, toc, previous: index ? metadata(docs[index - 1]) : null, next: docs[index + 1] ? metadata(docs[index + 1]) : null };
