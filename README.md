@@ -8,6 +8,8 @@ Click a section: selection changes immediately. The current content stays useful
 
 Steady packages that behavior so every screen doesn't have to reinvent it.
 
+![The Steady interaction playground with latency controls, immediate navigation intent, and committed content](https://raw.githubusercontent.com/oddurs/steady/main/docs/playground.png)
+
 ## Try it
 
 ```sh
